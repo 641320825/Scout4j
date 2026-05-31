@@ -10,10 +10,12 @@ target/
 build/
 .gradle/
 
-# Evaluation outputs and private runtime logs
+# Evaluation outputs, local agent context, and private runtime logs
 outputs/
 logs/
 artifacts/
+AGENTS.md
+CLAUDE.md
 *.tar.gz
 
 # Editor / OS

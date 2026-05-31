@@ -1,5 +1,7 @@
 # Scout4j
 
+The public repository is named **Scout4j**. The AgentSkill entry inside this repository is named **`java-enterprise-workflow`** in `SKILL.md` so agent runtimes can route Java enterprise backend tasks to it.
+
 Scout4j is an AgentSkill for Java enterprise backend work. It helps coding agents investigate, plan, implement, and verify changes in Java repositories without jumping straight to fragile patches.
 
 It is designed for common backend engineering tasks such as feature work, bug fixes, refactors, transaction-boundary changes, mapper/persistence updates, RPC/downstream dependency handling, MQ/CDC consumers, data repair jobs, performance fixes, and targeted verification.
@@ -25,6 +27,27 @@ It is designed for common backend engineering tasks such as feature work, bug fi
 - It does not assume Spring Boot, Maven, MyBatis, JPA, Kafka, or DDD unless the target repository shows those patterns.
 - It is not a benchmark answer key and does not include the local evaluation apparatus, fixtures, harnesses, logs, or benchmark outputs.
 - It does not authorize destructive production operations, schema/data migrations, PR publication, or external side effects without explicit user confirmation.
+
+## Repository boundary
+
+This repository intentionally contains only the reusable AgentSkill package.
+
+Included:
+
+- `SKILL.md`
+- public README / license / contribution and security docs
+- generic workflow references under `references/`
+- small helper scripts under `scripts/`
+
+Not included:
+
+- local evaluation apparatus
+- benchmark fixtures
+- A/B harnesses
+- generated logs or outputs
+- release tarballs or artifacts
+- provider/model configuration
+- private agent instructions such as `AGENTS.md` or `CLAUDE.md`
 
 ## Repository layout
 
