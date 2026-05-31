@@ -1,0 +1,23 @@
+# Python / OS artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Java build artifacts
+target/
+build/
+.gradle/
+
+# Evaluation outputs and private runtime logs
+outputs/
+logs/
+artifacts/
+*.tar.gz
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
