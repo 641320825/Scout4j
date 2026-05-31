@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Check that the Java enterprise workflow skill has not absorbed benchmark answers.
+"""Check that the Scout4j skill has not absorbed benchmark answers.
 
-Run from the standalone skill repository root:
+Run from the standalone Scout4j repository root:
 
     python3 scripts/check_java_skill_deoverfit.py
 
-or from a monorepo containing this skill at `skills/java-enterprise-workflow`:
+or from a monorepo containing this skill at a custom path:
 
-    JAVA_WORKFLOW_SKILL_ROOT=skills/java-enterprise-workflow python3 scripts/check_java_skill_deoverfit.py
+    JAVA_WORKFLOW_SKILL_ROOT=path/to/Scout4j python3 scripts/check_java_skill_deoverfit.py
 """
 from __future__ import annotations
 

@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for improving the Java Enterprise Workflow skill.
+Thanks for improving Scout4j.
 
 ## Contribution principles
 
@@ -29,10 +29,10 @@ Expected result: `de-overfit grep OK`.
 Also run markdown/diff checks available in the host repository, for example:
 
 ```bash
-git diff --check -- skills/java-enterprise-workflow
+git diff --check
 ```
 
-If you modify evaluation scripts or fixtures outside this skill package, also run their dedicated tests/checks.
+This repository contains only the Scout4j skill package. If you modify evaluation scripts or fixtures in a separate local apparatus, run their dedicated checks there; do not include those files in this public skill repository.
 
 ## Pull request checklist
 
