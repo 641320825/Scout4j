@@ -1,6 +1,6 @@
 # Scout4j
 
-The public repository is named **Scout4j**. The AgentSkill entry inside this repository is named **`java-enterprise-workflow`** in `SKILL.md` so agent runtimes can route Java enterprise backend tasks to it.
+The public repository is named **Scout4j**. The AgentSkill entry inside this repository is named **`java-enterprise-workflow`** in `SKILL.md` so Claude and other coding agent runtimes can route Java enterprise backend tasks to it.
 
 Scout4j is an AgentSkill for Java enterprise backend work. It helps coding agents investigate, plan, implement, and verify changes in Java repositories without jumping straight to fragile patches.
 
