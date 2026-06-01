@@ -1,9 +1,130 @@
 ---
-name: java-enterprise-workflow
-description: General-purpose coding-agent workflow for Java enterprise backend projects. Use when implementing features, fixing bugs, refactoring, reviewing code/PRs, adding fields/APIs/database schema changes, changing REST/RPC endpoints, repository/mapper persistence, MQ/CDC consumers, transaction boundaries, JUnit/Mockito/Spock tests, or validating Maven/Gradle Spring layered backend code. Designed for open-source reuse across Java teams; avoid company-specific assumptions.
+name: scout4j
+description: "Java 代码审查与开发工作流（Scout4j）。覆盖两种模式：① 主动审查（/scout4j）— 读取 git diff，对照硬闸规则（@Transactional 位置、事务/消息顺序、Mapper 同步、MQ 幂等、游标一致性等）输出 ✅/❌/⚠️ 结构化报告；② 工作流引导 — 安全、系统地在 Java 企业级后端仓库（Maven/Gradle、Spring Boot、MyBatis/JPA、Kafka/MQ）中实现需求、修 Bug、重构、改字段/接口、处理事务边界。安装后自动注册 UserPromptSubmit hook，Java 相关 prompt 自动注入对应编码规范。"
+
+metadata:
+  skillhub.creator: "wb_lvzhenyu"
+  skillhub.updater: "wb_lvzhenyu"
+  skillhub.version: "V1"
+  skillhub.source: "FRIDAY Skillhub"
 ---
 
-# Java Enterprise Workflow
+# Scout4j
+
+Scout4j 提供两种能力：
+
+1. **主动审查**（`/scout4j`）— 扫描当前 diff，对照硬闸规则输出 ✅/❌/⚠️ 报告
+2. **工作流引导** — 安全、系统地完成 Java 企业级后端开发任务
+
+---
+
+## Installation
+
+**首次使用前，运行 install.sh 注册 hook：**
+
+```bash
+# 通过 skill 市场安装后
+bash ~/.claude/skills/scout4j/scripts/install.sh
+
+# 或直接克隆仓库后
+bash ~/.claude/scout4j/scripts/install.sh
+```
+
+install.sh 会自动完成：
+- 将 `scout4j_hook.py` 拷贝到 `~/.claude/scripts/` 并注册到 `~/.claude/settings.json` 的 `UserPromptSubmit` hooks
+- 注册完成后，所有含 Java 关键词的 prompt 将自动注入对应编码规范（无需手动触发）
+
+若 hook 已注册，脚本幂等跳过，不重复添加。
+
+---
+
+## Active Review（主动审查）
+
+### 调用方式
+
+```
+/scout4j                  # 审查全量未提交改动（git diff HEAD）
+/scout4j --staged         # 只审查已 staged 的改动（git diff --cached）
+/scout4j <file>           # 审查指定文件
+/scout4j <commit>         # 审查某次 commit（如 HEAD~1、abc1234）
+/scout4j --all            # 强制跑所有规则域，不做关键词过滤
+```
+
+### 执行步骤
+
+**Step 1 — 获取 diff**
+
+按参数执行对应命令；`--staged` 用 `git diff --cached`，指定文件用 `git diff HEAD -- <file>`，指定 commit 用 `git show <commit>`，默认 `git diff HEAD`。diff 为空则提示用户后终止。diff 超过 500 行先列文件清单，询问是否全量审查。
+
+**Step 2 — 检测规则域（可多命中）**
+
+| 域 | 触发关键词/模式 |
+|---|---|
+| `transactions` | `@Transactional`、commit、rollback、outbox、一致性 |
+| `mq-consumer` | `@KafkaListener`、`@MafkaListener`、Consumer、Listener、MQ |
+| `add-field` | 新增 `private` 字段、DTO、`@JsonProperty`、schema |
+| `rpc-dependency` | OctoClient、`@Reference`、RestTemplate、RPC、重试 |
+| `data-repair` | Backfill、Repair、BatchUpdate、刷数、全量 |
+| `bugfix` | NPE、`NullPointerException`、fix、修复 |
+| `performance` | LIMIT、PageHelper、cursor、分页、慢查询、索引 |
+| `compatibility-rollout` | `@Deprecated`、灰度、双写、Feature Flag |
+
+**Step 3 — 加载 reference 文件**
+
+用 Read 工具加载 `references/<域>.md`（路径：skill 目录下的 `references/`）作为审查依据。
+
+**Step 4 — 硬闸检查**
+
+以下任一条件成立，报告中标记 **❌ HARD FAIL**，说明位置和修复建议：
+
+1. `@Transactional` 加在 `private` 方法上（Spring proxy 不拦截）
+2. `@Transactional` 加在同类自调用方法上（`this.xxx()` 或无前缀调用）
+3. 事务提交前已发出成功事件/消息（应用 `afterCommit` 或 outbox 模式）
+4. 改了 Mapper 方法签名，但 XML/SQL、`@Param`、测试未同步更新
+5. 游标分页的 cursor 字段在 service/mapper/SQL/test 四处不一致
+6. 测试 helper 是占位符（`// TODO`、`assertTrue(true)`），不执行真实路径
+7. 注释里描述了幂等/重试，但代码没有实际实现
+8. 引入大量无关辅助类，非核心文件占 diff 行数超过 50%
+
+**Step 5 — 语义证明检查**
+
+对 diff 中的写操作，检查能否回答三个问题（回答不上来标记 **⚠️**）：
+
+1. **Invariant**：成功/重试/回滚/部分失败后，什么业务不变量必须保持？
+2. **Enforcement**：哪段代码（事务边界/幂等键/锁/SQL）保证了它？
+3. **Proof**：哪个测试/断言会在不变量被破坏时失败？
+
+**Step 6 — 输出审查报告**
+
+```
+## Scout4j 审查报告
+
+审查范围：git diff HEAD（N 行变更，K 个文件）
+命中规则域：transactions / mq-consumer
+
+### 硬闸检查（§七）
+❌ [HARD FAIL] @Transactional 加在 private 方法上
+   位置：src/.../OrderService.java:42
+   原因：Spring proxy 不拦截 private 方法，注解无效
+   修复：将方法改为 public，或提取到独立的 @Service bean
+
+✅ 无事务提交前发出消息问题
+✅ Mapper 签名变更已同步 XML 和测试
+
+### 语义证明（§八）
+⚠️ OrderService.createOrder() 存在 DB 写操作，未找到幂等键或回滚断言
+   建议：添加唯一约束 + 对应测试用例
+
+✅ MQ 消费者已有幂等键检查
+
+结论：发现 1 处硬闸违规（❌），需重写后再提交。
+```
+
+审查只看 diff 的 `+` 行，不审查未变动代码。
+
+---
+
+## Java Enterprise Workflow
 
 Use this skill to work safely and systematically in Java enterprise backend repositories, especially Maven/Gradle multi-module projects, Spring/Spring Boot, layered/modular architecture, ORM/mapper-based persistence, messaging consumers, transaction-heavy service logic, and test-heavy codebases.
 
