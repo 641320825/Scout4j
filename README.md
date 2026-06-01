@@ -1,91 +1,110 @@
 # Scout4j
 
-The public repository is named **Scout4j**. The AgentSkill entry inside this repository is named **`java-enterprise-workflow`** in `SKILL.md` so Claude and other coding agent runtimes can route Java enterprise backend tasks to it.
+Scout4j is an AgentSkill for Java enterprise backend work. It provides two integrated capabilities:
 
-Scout4j is an AgentSkill for Java enterprise backend work. It helps coding agents investigate, plan, implement, and verify changes in Java repositories without jumping straight to fragile patches.
+1. **Active Review** (`/scout4j`) — scan the current git diff against hard-gate rules and output a structured ✅/❌/⚠️ report
+2. **Java Enterprise Workflow** — guide a coding agent to investigate, plan, implement, and verify changes safely in Java repositories
 
-It is designed for common backend engineering tasks such as feature work, bug fixes, refactors, transaction-boundary changes, mapper/persistence updates, RPC/downstream dependency handling, MQ/CDC consumers, data repair jobs, performance fixes, and targeted verification.
+A `UserPromptSubmit` hook is included to automatically inject the relevant coding reference into context when Java-related keywords are detected in a prompt — no manual trigger needed.
+
+---
 
 ## What Scout4j provides
 
-- A structured workflow for Java backend changes: investigate → plan → edit → verify → summarize.
-- Repository-first guidance: read local conventions and adjacent examples before changing code.
-- Focused references for common enterprise Java scenarios:
-  - feature and field/API/schema changes;
-  - bug fixes and code reviews;
-  - transactions and consistency boundaries;
-  - RPC/downstream retries, timeouts, and failure propagation;
-  - MQ/CDC consumers and projection updates;
-  - data repair/backfill jobs;
-  - pagination, performance, and mapper/SQL consistency;
-  - testing and verification.
-- Lightweight helper scripts for stack detection and release-time leakage checks.
+- **Hard-gate checks** for common Java enterprise failure modes:
+  - `@Transactional` on `private` methods or self-invocations (Spring proxy blind spot)
+  - Committing DB state and emitting an event/message before the transaction commits
+  - Mapper method signature changes without syncing XML/SQL, `@Param`, and tests
+  - Cursor field inconsistency across service / mapper / SQL / test layers
+  - Placeholder tests that do not execute the real path
+  - Idempotency or retry described only in comments, not implemented in code
 
-## What Scout4j is not
+- **Semantic proof check** — for every write operation in the diff, verify the three-line invariant: what must remain true, what code enforces it, and which test would fail if it breaks
 
-- It is not tied to a specific company architecture.
-- It does not assume Spring Boot, Maven, MyBatis, JPA, Kafka, or DDD unless the target repository shows those patterns.
-- It is not a benchmark answer key and does not include the local evaluation apparatus, fixtures, harnesses, logs, or benchmark outputs.
-- It does not authorize destructive production operations, schema/data migrations, PR publication, or external side effects without explicit user confirmation.
+- **Focused references** for common enterprise Java scenarios loaded on demand:
+  - transactions and consistency boundaries
+  - MQ/CDC consumers and idempotency
+  - RPC/downstream retries, timeouts, and failure propagation
+  - field/API/schema changes and compatibility rollout
+  - data repair/backfill jobs
+  - pagination, performance, and mapper/SQL consistency
+  - bug fixes, code reviews, refactors, testing
 
-## Repository boundary
+- **Lightweight helper scripts** for stack detection and release-time leakage checks
 
-This repository intentionally contains only the reusable AgentSkill package.
+---
 
-Included:
+## Installation
 
-- `SKILL.md`
-- public README / license / contribution and security docs
-- generic workflow references under `references/`
-- small helper scripts under `scripts/`
+Clone this repository into your agent's skills directory and run the install script:
 
-Not included:
+```bash
+git clone https://github.com/641320825/Scout4j.git ~/.claude/scout4j
+bash ~/.claude/scout4j/scripts/install.sh
+```
 
-- local evaluation apparatus
-- benchmark fixtures
-- A/B harnesses
-- generated logs or outputs
-- release tarballs or artifacts
-- provider/model configuration
-- private agent instructions such as `AGENTS.md` or `CLAUDE.md`
+`install.sh` registers the `UserPromptSubmit` hook in `~/.claude/settings.json`. The script is idempotent — safe to run multiple times.
+
+If you install via a skill marketplace, run the install script from the installed location instead:
+
+```bash
+bash <install-path>/scripts/install.sh
+```
+
+---
+
+## Usage
+
+### Active Review
+
+```bash
+/scout4j                  # review all uncommitted changes (git diff HEAD)
+/scout4j --staged         # review staged changes only (git diff --cached)
+/scout4j <file>           # review a specific file
+/scout4j <commit>         # review a specific commit (e.g. HEAD~1, abc1234)
+/scout4j --all            # force all rule domains regardless of keywords
+```
+
+### Automatic context injection
+
+After the hook is registered, any prompt that contains Java-related keywords (transaction, MQ, backfill, RPC, pagination, etc.) will automatically receive the relevant coding reference as additional context — no slash command needed.
+
+### Java workflow guidance
+
+Open any Java repository and describe your task. The skill will:
+1. Detect the stack (Maven/Gradle, Spring Boot, MyBatis/JPA, etc.)
+2. Classify the task and load the narrowest applicable reference
+3. Investigate entry points and affected layers before editing
+4. Propose a change plan for non-trivial work
+5. Verify with the smallest meaningful command
+
+---
 
 ## Repository layout
 
 ```text
-SKILL.md                                  AgentSkill entry point
-references/*.md                           Focused workflow references loaded as needed
-scripts/detect-java-stack.sh              Lightweight Java stack detection helper
-scripts/check_java_skill_deoverfit.py     Release guard against benchmark leakage
+SKILL.md                              AgentSkill entry point (unified: workflow + active review)
+references/*.md                       Focused workflow references loaded on demand
+scripts/detect-java-stack.sh          Lightweight Java stack detection helper
+scripts/scout4j_hook.py               UserPromptSubmit hook (auto-inject references)
+scripts/install.sh                    Registers the hook in ~/.claude/settings.json
+scripts/check_java_skill_deoverfit.py Release guard against benchmark leakage
 ```
 
-## Installation
+---
 
-Copy this repository folder into your agent's skills directory, or install it using the skill mechanism supported by your agent runtime.
+## What Scout4j is not
 
-The skill name inside `SKILL.md` is:
+- It is not tied to a specific company architecture
+- It does not assume Spring Boot, Maven, MyBatis, JPA, Kafka, or DDD unless the target repository shows those patterns
+- It does not authorize destructive production operations, schema/data migrations, PR publication, or external side effects without explicit user confirmation
+- It does not include local evaluation apparatus, benchmark fixtures, or A/B harnesses
 
-```text
-java-enterprise-workflow
-```
+---
 
-Use Scout4j when asking an agent to work on Java enterprise backend code.
+## Quality gate (for contributors)
 
-## Usage
-
-When the skill is active, the agent should read `SKILL.md` first, then load the narrowest applicable reference from `references/`.
-
-Examples:
-
-- RPC/downstream retry issue → `references/rpc-dependency.md`
-- Data repair/backfill job → `references/data-repair.md`
-- Cursor pagination/performance issue → `references/performance.md`
-- Transaction consistency issue → `references/transactions.md`
-- Testing/verification task → `references/testing.md`
-- Public API or persisted field change → `references/add-field.md` and `references/compatibility-rollout.md`
-
-## Quality gate
-
-Before publishing changes to this standalone skill package, run:
+Before publishing changes, run:
 
 ```bash
 python3 scripts/check_java_skill_deoverfit.py
@@ -99,11 +118,7 @@ de-overfit grep OK
 
 This prevents benchmark fixture names and standard-answer patterns from leaking into the reusable skill.
 
-You can also run a basic diff hygiene check before committing:
-
-```bash
-git diff --check
-```
+---
 
 ## License
 
