@@ -85,6 +85,13 @@ When choosing references, prefer the narrowest file but do not stop there if the
 
 After reading, convert the references into a concrete patch checklist. Do not merely mention risks in the plan: make the diff enforce them through method shape, constants, guards, tests, and explicit failure behavior.
 
+
+## Active Review Mode
+
+Use this mode when the user asks to review a Java backend diff, audit staged changes, check a commit, or run a pre-submit review. This is a review workflow, not a built-in slash command; follow it only when requested by the user or clearly appropriate for a code-review task.
+
+Read `references/code-review.md` for the detailed review checklist, semantic-proof questions, and report format. Keep the review repository-first and stack-aware: apply checks only when the repository uses the relevant technology or the diff shows the relevant pattern.
+
 ## Benchmark Plateau Guard
 
 Recent Java-workflow backtests showed the workflow can satisfy checklist terms while still failing judge review. Treat this as a hard failure mode: the goal is not to mention enterprise concerns, but to make the patch enforce the business invariant.

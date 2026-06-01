@@ -2,13 +2,14 @@
 
 The public repository is named **Scout4j**. The AgentSkill entry inside this repository is named **`java-enterprise-workflow`** in `SKILL.md` so Claude and other coding agent runtimes can route Java enterprise backend tasks to it.
 
-Scout4j is an AgentSkill for Java enterprise backend work. It helps coding agents investigate, plan, implement, and verify changes in Java repositories without jumping straight to fragile patches.
+Scout4j is an AgentSkill for Java enterprise backend work. It helps coding agents investigate, plan, implement, verify, and review changes in Java repositories without jumping straight to fragile patches.
 
 It is designed for common backend engineering tasks such as feature work, bug fixes, refactors, transaction-boundary changes, mapper/persistence updates, RPC/downstream dependency handling, MQ/CDC consumers, data repair jobs, performance fixes, and targeted verification.
 
 ## What Scout4j provides
 
 - A structured workflow for Java backend changes: investigate → plan → edit → verify → summarize.
+- Active Review Mode for repository-first diff/commit review focused on transaction boundaries, persistence contracts, idempotency, retry safety, pagination, and meaningful tests.
 - Repository-first guidance: read local conventions and adjacent examples before changing code.
 - Focused references for common enterprise Java scenarios:
   - feature and field/API/schema changes;
@@ -68,14 +69,17 @@ The skill name inside `SKILL.md` is:
 java-enterprise-workflow
 ```
 
-Use Scout4j when asking an agent to work on Java enterprise backend code.
+Use Scout4j when asking an agent to work on or review Java enterprise backend code.
 
 ## Usage
 
 When the skill is active, the agent should read `SKILL.md` first, then load the narrowest applicable reference from `references/`.
 
+For implementation tasks, use the investigate → plan → edit → verify → summarize workflow. For review tasks, use Active Review Mode: inspect the requested diff/commit, apply only repository-relevant checks, and report blockers/risks with evidence.
+
 Examples:
 
+- Code review / PR review / risk audit → Active Review Mode in `SKILL.md`, plus `references/code-review.md` when needed.
 - RPC/downstream retry issue → `references/rpc-dependency.md`
 - Data repair/backfill job → `references/data-repair.md`
 - Cursor pagination/performance issue → `references/performance.md`
